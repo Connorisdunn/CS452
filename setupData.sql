@@ -14,7 +14,7 @@ VALUES
     (2, 5);
 
 -- Insert sample data into the Employee table
-INSERT INTO Employee (employee_id, first_name, last_name, contact_id, store_id, manager_id)
+INSERT INTO Employee (employee_id, first_name, last_name, job_title, contact_id, store_id, manager_id)
 VALUES
     (1, 'Alice', 'Johnson', 'Manager', 1, 1, NULL), -- Manager who is also an employee
     (2, 'John', 'Doe', 'Sales Rep', 2, 1, 1),        -- Employee reporting to the manager
