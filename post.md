@@ -35,7 +35,7 @@ LIMIT 1;
 
 The problem was that I only included 6 stores in my data, each at a different city. So each city I included has 1 store and makes it so all have a tie for the most. Might've only picked Vernal because it was the last store on the list, but this gave me the wrong result.
 
-### Zero-shot
+### Zero-shot vs Single-Domain Double-Shot
 The above examples were done using single-domain double-shot.
 
 When using zero-shot, there were a few differences in some of the answers. Such as:
