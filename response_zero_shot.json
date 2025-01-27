@@ -1,0 +1,76 @@
+{
+  "strategy": "zero_shot",
+  "prompt_prefix": "-- Table: Employee\nCREATE TABLE Employee (\n    employee_id BIGINT PRIMARY KEY,\n    first_name VARCHAR(50) NOT NULL,\n    last_name VARCHAR(50) NOT NULL,\n    job_title VARCHAR(50) NOT NULL,\n    salary DOUBLE NOT NULL,\n    manager_id BIGINT,\n    store_id BIGINT,\n    hire_date DATE NOT NULL,\n    contact_id BIGINT,\n    FOREIGN KEY (manager_id) REFERENCES Manager(manager_id),\n    FOREIGN KEY (store_id) REFERENCES Store(store_id),\n    FOREIGN KEY (contact_id) REFERENCES Contact(contact_id)\n);\n\n-- Table: Manager\nCREATE TABLE Manager (\n    manager_id BIGINT PRIMARY KEY,\n    employee_id BIGINT UNIQUE,\n    store_id BIGINT UNIQUE,\n    FOREIGN KEY (employee_id) REFERENCES Employee(employee_id),\n    FOREIGN KEY (store_id) REFERENCES Store(store_id)\n);\n\n-- Table: Store\nCREATE TABLE Store (\n    store_id BIGINT PRIMARY KEY,\n    contact_id BIGINT,\n    FOREIGN KEY (contact_id) REFERENCES Contact(contact_id)\n);\n\n-- Table: Stock\nCREATE TABLE Stock (\n    stock_id BIGINT PRIMARY KEY,\n    store_id BIGINT NOT NULL,\n    equipment_id BIGINT NOT NULL,\n    quantity BIGINT NOT NULL,\n    FOREIGN KEY (store_id) REFERENCES Store(store_id),\n    FOREIGN KEY (equipment_id) REFERENCES Equipment(equipment_id)\n);\n\n-- Table: Equipment\nCREATE TABLE Equipment (\n    equipment_id BIGINT PRIMARY KEY,\n    name VARCHAR(100) NOT NULL,\n    brand VARCHAR(50) NOT NULL,\n    category VARCHAR(75) NOT NULL,\n    price DOUBLE NOT NULL\n);\n\n-- Table: Contact\nCREATE TABLE Contact (\n    contact_id BIGINT PRIMARY KEY,\n    phone_number BIGINT NOT NULL,\n    email_address VARCHAR(50) NOT NULL,\n    street VARCHAR(100) NOT NULL,\n    city VARCHAR(50) NOT NULL,\n    state CHAR(2) NOT NULL,\n    zip SMALLINT NOT NULL\n);\n Give me a sqlite select statement that answers the question. Only respond with sqlite syntax. If there is an error do not expalin it!",
+  "questionResults": [
+    {
+      "question": "Which store has the highest stock quantity for any equipment?",
+      "sql": "\nSELECT s.store_id\nFROM Stock s\nGROUP BY s.store_id\nORDER BY MAX(s.quantity) DESC\nLIMIT 1;\n",
+      "queryRawResponse": "[(3,)]",
+      "friendlyResponse": "Store 3 has the highest stock quantity for any equipment.",
+      "error": "None"
+    },
+    {
+      "question": "Which manager oversees the most employees?",
+      "sql": "\nSELECT m.manager_id, COUNT(e.employee_id) AS employee_count\nFROM Employee e\nJOIN Manager m ON e.manager_id = m.manager_id\nGROUP BY m.manager_id\nORDER BY employee_count DESC\nLIMIT 1;\n",
+      "queryRawResponse": "[(1, 4)]",
+      "friendlyResponse": "Manager 4 oversees the most employees.",
+      "error": "None"
+    },
+    {
+      "question": "What is the most expensive equipment available in stock?",
+      "sql": "\nSELECT e.equipment_id, e.name, e.brand, e.category, e.price\nFROM Equipment e\nJOIN Stock s ON e.equipment_id = s.equipment_id\nORDER BY e.price DESC\nLIMIT 1;\n",
+      "queryRawResponse": "[(2, 'Driver', 'Callaway', 'Club', 499.99)]",
+      "friendlyResponse": "The most expensive equipment in stock is a Callaway Driver, priced at $499.99.",
+      "error": "None"
+    },
+    {
+      "question": "Which store stocks the most equipment categories?",
+      "sql": "\nSELECT s.store_id\nFROM Store s\nJOIN Stock st ON s.store_id = st.store_id\nJOIN Equipment e ON st.equipment_id = e.equipment_id\nGROUP BY s.store_id\nORDER BY COUNT(DISTINCT e.category) DESC\nLIMIT 1;\n",
+      "queryRawResponse": "[(4,)]",
+      "friendlyResponse": "Store 4 stocks the most equipment categories.",
+      "error": "None"
+    },
+    {
+      "question": "Which employee has the highest salary?",
+      "sql": "\nSELECT first_name, last_name, MAX(salary) AS max_salary\nFROM Employee;\n",
+      "queryRawResponse": "[('Oliver', 'Grant', 23.0)]",
+      "friendlyResponse": "The employee with the highest salary is Oliver Grant, earning $23.00.",
+      "error": "None"
+    },
+    {
+      "question": "Which manager has been with the company the longest?",
+      "sql": "\nSELECT m.manager_id, e.first_name, e.last_name, e.hire_date\nFROM Manager m\nJOIN Employee e ON m.employee_id = e.employee_id\nORDER BY e.hire_date\nLIMIT 1;\n",
+      "queryRawResponse": "[(1, 'Alice', 'Johnson', '01/01/2000')]",
+      "friendlyResponse": "The longest-serving manager is Alice Johnson, who started on 01/01/2000.",
+      "error": "None"
+    },
+    {
+      "question": "What is the total value of all equipment in stock for each store?",
+      "sql": "\nSELECT \n    s.store_id, \n    SUM(e.price * st.quantity) AS total_value\nFROM \n    Store s\nJOIN \n    Stock st ON s.store_id = st.store_id\nJOIN \n    Equipment e ON st.equipment_id = e.equipment_id\nGROUP BY \n    s.store_id;\n",
+      "queryRawResponse": "[(1, 6299.4), (2, 6999.6), (3, 7499.1), (4, 3539.5499999999997), (5, 5199.6), (6, 4999.8)]",
+      "friendlyResponse": "The total equipment value for each store is: Store 1: $6,299.40, Store 2: $6,999.60, Store 3: $7,499.10, Store 4: $3,539.55, Store 5: $5,199.60, Store 6: $4,999.80.",
+      "error": "None"
+    },
+    {
+      "question": "Which equipment brand is the most stocked across all stores?",
+      "sql": "\nSELECT e.brand\nFROM Stock s\nJOIN Equipment e ON s.equipment_id = e.equipment_id\nGROUP BY e.brand\nORDER BY SUM(s.quantity) DESC\nLIMIT 1;\n",
+      "queryRawResponse": "[('Titleist',)]",
+      "friendlyResponse": "The most stocked brand across all stores is Titleist.",
+      "error": "None"
+    },
+    {
+      "question": "Which city has the highest number of stores?",
+      "sql": "\nSELECT c.city\nFROM Store s\nJOIN Contact c ON s.contact_id = c.contact_id\nGROUP BY c.city\nORDER BY COUNT(s.store_id) DESC\nLIMIT 1;\n",
+      "queryRawResponse": "[('Vernal',)]",
+      "friendlyResponse": "Vernal.",
+      "error": "None"
+    },
+    {
+      "question": "What is the total salary expense for employees at each store?",
+      "sql": "\nSELECT \n    store_id, \n    SUM(salary) AS total_salary_expense\nFROM \n    Employee\nGROUP BY \n    store_id;\n",
+      "queryRawResponse": "[(1, 61.5), (2, 16.25), (3, 36.5), (5, 37.5), (6, 15.75)]",
+      "friendlyResponse": "Sure! Here's a simplified response:\n- Store 1: $61.5\n- Store 2: $16.25\n- Store 3: $36.5\n- Store 5: $37.5\n- Store 6: $15.75",
+      "error": "None"
+    }
+  ]
+}
