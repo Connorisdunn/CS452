@@ -6,49 +6,47 @@ from time import time
 
 print("Running db_bot.py!")
 
-# Helper function to get file paths
 fdir = os.path.dirname(__file__)
 def getPath(fname):
     return os.path.join(fdir, fname)
 
-# Paths for SQLite setup
-sqliteDbPath = getPath("project_db.sqlite")
+# SQLITE
+sqliteDbPath = getPath("aidb.sqlite")
 setupSqlPath = getPath("setup.sql")
 setupSqlDataPath = getPath("setupData.sql")
 
-# Erase previous database if it exists
+# Erase previous db
 if os.path.exists(sqliteDbPath):
-    os.remove(sqliteDbPath)
+    os.remove(sqliteDbPath) 
 
-# Set up the SQLite database
-sqliteCon = sqlite3.connect(sqliteDbPath)  # Create a new database
+sqliteCon = sqlite3.connect(sqliteDbPath) # create new db
 sqliteCursor = sqliteCon.cursor()
 with (
-    open(setupSqlPath) as setupSqlFile,
-    open(setupSqlDataPath) as setupSqlDataFile
-):
+        open(setupSqlPath) as setupSqlFile,
+        open(setupSqlDataPath) as setupSqlDataFile
+    ):
+
     setupSqlScript = setupSqlFile.read()
-    setupSqlDataScript = setupSqlDataFile.read()
+    setupSQlDataScript = setupSqlDataFile.read()
 
-sqliteCursor.executescript(setupSqlScript)  # Create tables and relationships
-sqliteCursor.executescript(setupSqlDataScript)  # Populate tables with data
+sqliteCursor.executescript(setupSqlScript) # setup tables and keys
+sqliteCursor.executescript(setupSQlDataScript) # setup tables and keys
 
-# Function to execute SQL queries
 def runSql(query):
     result = sqliteCursor.execute(query).fetchall()
     return result
 
-# Load OpenAI API configuration
+# OPENAI
 configPath = getPath("config.json")
+print(configPath)
 with open(configPath) as configFile:
     config = json.load(configFile)
 
-openAiClient = OpenAI(api_key=config["openaiKey"])
+openAiClient = OpenAI(api_key = config["openaiKey"])
 
-# Function to get GPT responses
 def getChatGptResponse(content):
     stream = openAiClient.chat.completions.create(
-        model="gpt-4o-mini",  # Use GPT-4 model
+        model="gpt-4o",
         messages=[{"role": "user", "content": content}],
         stream=True,
     )
@@ -61,29 +59,31 @@ def getChatGptResponse(content):
     result = "".join(responseList)
     return result
 
-# Prompt strategies for different scenarios
-commonSqlOnlyRequest = " Give me a SQLite SELECT statement that answers the question. Only respond with SQLite syntax. If there is an error, do not explain it!"
+
+# strategies
+commonSqlOnlyRequest = " Give me a sqlite select statement that answers the question. Only respond with sqlite syntax. If there is an error do not expalin it!"
 strategies = {
     "zero_shot": setupSqlScript + commonSqlOnlyRequest,
-    "few_shot": (
-        setupSqlScript
-        + " Who has multiple dogs? "
-        + "\nSELECT owner_id, COUNT(dog_id) FROM ownership GROUP BY owner_id HAVING COUNT(dog_id) > 1;\n"
-        + commonSqlOnlyRequest
-    ),
+    "single_domain_double_shot": (setupSqlScript +
+                                  " Which store has the highest stock quantity for any equipment? " +
+                                  "\nSELECT s.store_id, SUM(st.quantity) AS total_stock\nFROM Store s\nJOIN Stock st ON s.store_id = st.store_id\nGROUP BY s.store_id\nORDER BY total_stock DESC\nLIMIT 1;\n" +
+                                  commonSqlOnlyRequest)
 }
 
-# Example questions to query the database
 questions = [
-    "Which cities have the most customers?",
-    "Who owns more than one dog?",
-    "What are the names of all dogs who have won awards?",
-    "List the top 3 dishes by sales in the restaurant database.",
-    "Which employees have served the most customers?",
-    "Who does not have an email address listed?",
+    "Which store has the highest stock quantity for any equipment?",
+    "Which manager oversees the most employees?",
+    "What is the most expensive equipment available in stock?",
+    "Which store stocks the most equipment categories?",
+    "Which employee has the highest salary?",
+    "Which manager has been with the company the longest?",
+    "What is the total value of all equipment in stock for each store?",
+    "Which equipment brand is the most stocked across all stores?",
+    "Which city has the highest number of stores?",
+    "What is the total salary expense for employees at each store?"
 ]
 
-# Function to sanitize GPT responses to extract raw SQL code
+
 def sanitizeForJustSql(value):
     gptStartSqlMarker = "```sql"
     gptEndSqlMarker = "```"
@@ -94,51 +94,39 @@ def sanitizeForJustSql(value):
 
     return value
 
-# Process each strategy
 for strategy in strategies:
     responses = {"strategy": strategy, "prompt_prefix": strategies[strategy]}
     questionResults = []
     for question in questions:
-        print(f"Processing question: {question}")
+        print(question)
         error = "None"
         try:
-            # Get SQL syntax from GPT
             sqlSyntaxResponse = getChatGptResponse(strategies[strategy] + " " + question)
             sqlSyntaxResponse = sanitizeForJustSql(sqlSyntaxResponse)
-            print(f"SQL Response: {sqlSyntaxResponse}")
-
-            # Execute SQL and fetch raw results
+            print(sqlSyntaxResponse)
             queryRawResponse = str(runSql(sqlSyntaxResponse))
-            print(f"Query Raw Response: {queryRawResponse}")
-
-            # Generate a friendly explanation of the results
-            friendlyResultsPrompt = (
-                "I asked a question '" + question +
-                "' and the response was '" + queryRawResponse +
-                "'. Please, just give a concise response in a more friendly way."
-            )
+            print(queryRawResponse)
+            friendlyResultsPrompt = "I asked a question \"" + question +"\" and the response was \""+queryRawResponse+"\" Please, just give a concise response in a more friendly way? Please do not give any other suggests or chatter."
             friendlyResponse = getChatGptResponse(friendlyResultsPrompt)
-            print(f"Friendly Response: {friendlyResponse}")
-
+            print(friendlyResponse)
         except Exception as err:
             error = str(err)
-            print(f"Error: {error}")
+            print(err)
 
         questionResults.append({
-            "question": question,
-            "sql": sqlSyntaxResponse,
+            "question": question, 
+            "sql": sqlSyntaxResponse, 
             "queryRawResponse": queryRawResponse,
             "friendlyResponse": friendlyResponse,
-            "error": error,
+            "error": error
         })
 
     responses["questionResults"] = questionResults
 
-    # Save results to a JSON file
     with open(getPath(f"response_{strategy}_{time()}.json"), "w") as outFile:
         json.dump(responses, outFile, indent = 2)
+            
 
-# Close database connection
 sqliteCursor.close()
 sqliteCon.close()
 print("Done!")
