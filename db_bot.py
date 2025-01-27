@@ -135,9 +135,8 @@ for strategy in strategies:
     responses["questionResults"] = questionResults
 
     # Save results to a JSON file
-    outputPath = getPath(f"response_{strategy}_{int(time())}.json")
-    with open(outputPath, "w") as outFile:
-        json.dump(responses, outFile, indent=2)
+    with open(getPath(f"response_{strategy}_{time()}.json"), "w") as outFile:
+        json.dump(responses, outFile, indent = 2)
 
 # Close database connection
 sqliteCursor.close()
