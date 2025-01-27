@@ -16,9 +16,9 @@ VALUES
 -- Insert sample data into the Employee table
 INSERT INTO Employee (employee_id, first_name, last_name, contact_id, store_id, manager_id)
 VALUES
-    (1, 'Alice', 'Johnson', 1, 1, NULL), -- Manager who is also an employee
-    (2, 'John', 'Doe', 2, 1, 1),        -- Employee reporting to the manager
-    (3, 'Jane', 'Smith', 3, 1, 1);      -- Employee reporting to the manager
+    (1, 'Alice', 'Johnson', 'Manager', 1, 1, NULL), -- Manager who is also an employee
+    (2, 'John', 'Doe', 'Sales Rep', 2, 1, 1),        -- Employee reporting to the manager
+    (3, 'Jane', 'Smith', 'Apparel Rep', 3, 1, 1);      -- Employee reporting to the manager
 
 -- Insert sample data into the Manager table
 -- The manager is linked back to the Employee table
