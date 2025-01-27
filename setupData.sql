@@ -14,17 +14,17 @@ VALUES
     (2, 5);
 
 -- Insert sample data into the Employee table
-INSERT INTO Employee (employee_id, first_name, last_name, job_title, contact_id, store_id, manager_id)
+INSERT INTO Employee (employee_id, first_name, last_name, job_title, salary, manager_id, store_id, hire_date, contact_id)
 VALUES
-    (1, 'Alice', 'Johnson', 'Manager', 1, 1, NULL), -- Manager who is also an employee
-    (2, 'John', 'Doe', 'Sales Rep', 2, 1, 1),        -- Employee reporting to the manager
-    (3, 'Jane', 'Smith', 'Apparel Rep', 3, 1, 1);      -- Employee reporting to the manager
+    (1, 'Alice', 'Johnson', 'Manager', 20.01, NULL, 1, '01/01/2000', 1), -- Manager who is also an employee
+    (2, 'John', 'Doe', 'Sales Rep', 15.99, 1, 1, '07/22/2005', 2),        -- Employee reporting to the manager
+    (3, 'Jane', 'Smith', 'Apparel Rep', 12.00, 1, 1, '10/27/2009', 3);      -- Employee reporting to the manager
 
 -- Insert sample data into the Manager table
 -- The manager is linked back to the Employee table
-INSERT INTO Manager (manager_id, first_name, last_name, employee_id, contact_id)
+INSERT INTO Manager (manager_id, employee_id, store_id)
 VALUES
-    (1, 'Alice', 'Johnson', 1, 1); -- Matches the manager in Employee
+    (1, 1, 1); -- Matches the manager in Employee
 
 -- Insert sample data into the Equipment table
 INSERT INTO Equipment (equipment_id, name, brand, category, price)
