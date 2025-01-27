@@ -40,6 +40,17 @@ The above examples were done using single-domain double-shot.
 
 When using zero-shot, there were a few differences in some of the answers. Such as:
 
+Question: "Which manager oversees the most employees?"
+Zero-shot: "Manager 4 oversees the most employees."
+Single-Domain: "The manager overseeing the most employees is Manager 1, with 4 employees."
+Clearly they produced different output. Single domain produced the correct input, which in this case was mananger 4. 
+
+Most of the other differences were small and much related to syntax. This is an example of what this is referring to.
+
+Question: "Which store has the highest stock quantity for any equipment?"
+Zero-shot: "Store 3 has the highest stock quantity for any equipment."
+Single-Domain: "Store 3 has the highest stock quantity with 90 units."
+Where single-domain actually provided more details and information. While zero shot was still accurate, single domain not only gave the right answer but potentially the follow up question to that answer.
 
 
 ### Conclusion
